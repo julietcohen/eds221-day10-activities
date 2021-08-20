@@ -1,0 +1,107 @@
+---
+title: "day-10-activities"
+author: "Juliet"
+date: "8/20/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+library(here)
+library(ggExtra)
+```
+
+```{r}
+weather <- read_csv(here("data", "ntl20_v6.csv"))
+weather
+
+ice <- read_csv(here("data", "ntl33_v7.csv"), na = c("NA", "-999"))
+```
+
+```{r}
+ice_plot <- ggplot(data = ice, aes(x = lakeid, y = ice_duration )) +
+  geom_jitter(aes(color = lakeid)) +
+  labs(x = "Lake",
+       y = "Ice Duration (days)",
+       title = "Ice Duration by Lake") +
+  theme(panel.grid = element_blank())
+
+#+
+# geom_boxplot(data = ice, horizontal = TRUE, axes = FALSE, range = 2)
+
+ggMarginal(ice_plot, type = "boxplot", groupColour = TRUE, outline = FALSE)
+
+#unique(ice$lakeid)
+
+#class(ice$ice_duration)
+
+# using a boxplot over a jitter allows the outliers to be doubly represented, so we have to remove them from the boxplot but IDK how
+
+```
+```{r}
+ice_dates_sep <- ice %>% 
+  separate(season, c("year_1", "year_2"), sep = "-")
+```
+
+
+```{r}
+
+#mean_carapace_length_year = mean(size_mm, na.rm = TRUE))
+
+mean_ice_years_sep <- ice_dates_sep %>% 
+  group_by(year_2) %>% 
+  summarize(mean_ice_duration = mean(ice_duration)) %>% 
+  mutate(year_2 = as.numeric(year_2))
+
+# i am taking the mean ice duration for each year considering all lakes, this only takes the second year of the winter season into account
+
+mean_ice <- ice %>% 
+  group_by(year4) %>% 
+  summarize(mean_ice_duration = mean(ice_duration))
+```
+
+
+```{r}
+mean_ice <- ggplot(data = mean_ice, aes(x = year4, y = mean_ice_duration)) +
+  geom_line()
+
+mean_ice
+
+#class(ice_dates_sep$year_2)
+
+# I observe a gradual linear negative trend
+```
+
+```{r}
+mean_air <- weather %>%
+  filter(month %in% c(12, 1, 2)) %>% 
+  group_by(year4) %>% 
+  summarize(mean_air_temp = mean(ave_air_temp_adjusted))
+```
+
+
+```{r}
+mean_air_temp <- ggplot(data = mean_air, aes(x = year4, y = mean_air_temp)) +
+  geom_line()
+
+mean_air_temp
+
+# the trend is a gradual linear increase in mean air temp over time 
+```
+
+
+```{r}
+joined_data <- left_join(mean_air, mean_ice)
+```
+
+
+
+
+
+
+
+
+
+
